@@ -1,0 +1,17 @@
+version: '3.5'
+
+services:
+  laravel-app:
+    build:
+      context: '.'
+      dockerfile: Dockerfile-Apache-2
+      args:
+        uid: ${UID}
+    container_name: mc-app
+    environment:
+      - APACHE_RUN_USER=#${UID}
+      - APACHE_RUN_GROUP=#${UID}
+    volumes:
+      - .:/var/www/html
+    ports:
+      - 80:80

@@ -1,0 +1,30 @@
+FROM php:7.2-apache
+ENV xdebugversion="2.6.1"
+ENV nodeversion="10.15.3"
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN apt-get update
+RUN apt-get install wget git -y
+COPY ./docker/apache2.conf /etc/apache2/apache2.conf
+COPY ./docker/php.dev.ini $PHP_INI_DIR/php.ini
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+COPY . /var/www/html
+WORKDIR /root
+#RUN composer install
+RUN curl -sS https://getcomposer.org/installer -o composer-setup.php
+RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+WORKDIR /
+RUN pecl install xdebug-2.8.1 \
+     && docker-php-ext-enable xdebug
+RUN docker-php-ext-install mysqli
+RUN docker-php-ext-install pdo_mysql
+RUN wget https://nodejs.org/dist/v$nodeversion/node-v$nodeversion-linux-x64.tar.xz
+RUN tar xf node-v*
+RUN ln -s /node-v*/bin/npm /usr/bin/npm
+RUN ln -s /node-v*/bin/node /usr/bin/node
+RUN ln -s /node-v*/bin/npx /usr/bin/npx
+RUN apt-get install openssh-client -y
+WORKDIR /var/www/html
+RUN chmod 777 storage/*
+RUN chown -R www-data:www-data /var/www/html
+EXPOSE 80
